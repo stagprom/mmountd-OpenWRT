@@ -1,0 +1,71 @@
+#!/bin/sh
+
+# mkdir -p /tmp/log
+# exec >>/tmp/log/mmountd.log 2>&1
+
+./lib/functions.sh
+
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+SERVICE_PID_DIR=/var/run
+
+MMOUNTD_BIN=/sbin/mmountd
+SMB_CONF_DIR=/var/etc
+SMB_CONF_FILE=$SMB_CONF_DIR/mmountd.smb.conf
+
+MNT_DIR="$(uci get mmountd.mmountd.path)"
+TIMEOUT="$(uci get mmountd.mmountd.timeout)"
+HELPER="$(uci get mmountd.mmountd.helper)"
+LED="$(uci get mmountd.mmountd.led)"
+
+
+# logger -t DEBUG "HOTPLUG mmountd: $* $ACTION $DEVTYPE $DEVNAME"
+if [ $DEVTYPE = "partition" ]
+    then
+	DAEMON_PID_FILE="$SERVICE_PID_DIR/mmountd.$DEVNAME.pid"
+	if [ $ACTION = 'add' ]
+	    then
+	    	if [ "$(mount | grep $DEVNAME)" != "" ]
+	    		then
+	    			logger -t DEBUG "HOTPLUG mmountd: $DEVNAME already mounted"
+	    			exit
+	    	fi
+		BINFO=$( blkid | grep "^/dev/$DEVNAME" )
+		LABEL=$( echo $BINFO | sed -n 's/\(.*\)\(LABEL=\"\)\([^\"]*\)\(\".*\)/\3/p' )
+		TYPE=$( echo $BINFO | sed -n 's/\(.*\)\(TYPE=\"\)\([^\"]*\)\(\".*\)/\3/p' )
+		UUID=$( echo $BINFO | sed -n 's/\(.*\)\(UUID=\"\)\([^\"]*\)\(\".*\)/\3/p' )
+		[ -z $UUID ] && UUID=$( date | md5sum | grep -o [[:alnum:]]* )
+		[ -z $LABEL ] && LABEL=$3
+		case "$TYPE" in
+			ext2|ext3|ext4)	MOPT="-t ext4" ;;
+			hfsplus)	MOPT="-t hfsplus -o force,rw,relatime,uid=99,gid=99,nls=utf8,sync" ;;
+			vfat)		MOPT="-t vfat -o rw,relatime,uid=99,gid=99" ;;
+			*)		exit ;;
+		esac
+		if [ ! -d $MNT_DIR ] 
+			then	
+				mkdir -p $MNT_DIR
+				sleep 1
+		fi
+		$MMOUNTD_BIN $TIMEOUT "$MOPT" /dev/$DEVNAME $MNT_DIR/$LABEL "$HELPER $LABEL $LED" &
+		echo $! > $DAEMON_PID_FILE
+		logger -t DEBUG "HOTPLUG mmountd add: $DAEMON_PID_FILE $TIMEOUT $UUID $TYPE $MNT_DIR $LABEL $MOPT $HELPER $! $?"
+		[ -d $SMB_CONF_DIR ] || mkdir -p $SMB_CONF_DIR
+		echo -e "[$LABEL]\n\tpath = $MNT_DIR/$LABEL\n\tread_only = no\n\tguest_ok = yes" > $SMB_CONF_DIR/$DEVNAME.smb
+		echo -e "include = $SMB_CONF_DIR/$DEVNAME.smb" >> $SMB_CONF_FILE
+		killall -HUP smbd
+		killall -HUP nmbd
+	fi
+	if [ $ACTION = "remove" ]
+	    then
+	    	logger -t DEBUG "HOTPLUG mmountd remove $DEVNAME"
+		grep -v -e "^include = $SMB_CONF_DIR/$DEVNAME.smb" $SMB_CONF_FILE > $SMB_CONF_FILE.tmp
+		mv $SMB_CONF_FILE.tmp $SMB_CONF_FILE
+		killall -HUP smbd
+		killall -HUP nmbd
+		rm "$SMB_CONF_DIR/$DEVNAME.smb"
+		kill "$(cat $DAEMON_PID_FILE)"
+		rm $DAEMON_PID_FILE
+	fi
+fi
+

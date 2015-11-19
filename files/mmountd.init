@@ -1,0 +1,17 @@
+#!/bin/sh /etc/rc.common
+
+START=80
+HELPER_DIR=/tmp/run/mmountd
+
+start()
+{
+	P="$(uci get mmountd.mmountd.path)"
+	[ -n "$P" -a ! -f "$P" ] && mkdir -p $P
+	[ -n "$P" -a ! -f "$HELPER_DIR" ] && mkdir -p $HELPER_DIR
+}
+
+stop()
+{
+	P="$(uci get mmountd.mmountd.path)"
+	rmdir -r $P
+}

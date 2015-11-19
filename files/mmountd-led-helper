@@ -1,0 +1,26 @@
+#!bin/sh
+
+LED_D="/tmp/mnti/led"
+LED_1=ht-tm02:blue:wlan
+LED_2=ht-tm02:green:lan
+HELPER_DIR=/tmp/run/mmountd
+
+
+led_set_attr() {
+	[ -f "/sys/class/leds/$1/$2" ] && echo "$3" > "/sys/class/leds/$1/$2"
+}
+
+logger -t DEBUG "mmountd-led-helper $*"
+
+[ "$3" = "mount" ] && touch $HELPER_DIR/$1
+[ "$3" = "umount" ] && rm $HELPER_DIR/$1
+
+if [ "$(ls -A $HELPER_DIR)" ]; then
+	led_set_attr $2 "trigger" "timer"
+	led_set_attr $2 "delay_on" "$2"
+	led_set_attr $2 "delay_off" "$3"
+else
+	/etc/init.d/led start
+fi
+
+exit 0
