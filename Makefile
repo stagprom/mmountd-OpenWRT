@@ -1,22 +1,27 @@
-
-# Minimalistic (auto) mount daemon
-# Copyright (C) 2015  stagprom
-#
-# This file is part of mmountd.
-#
-# mmountd is free software: you can redistribute it and/or modify
-# i t under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
-# (at your option) any later version.
-#
-# mmountd is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with mmountd.  If not, see <http://www.gnu.org/licenses/>.
-
+/*
+ *  Minimalistic (auto) mount daemon
+ *  Copyright (C) 2015  Ernest Vogelsang <stagprom@posteo.de>
+ * 
+ *  This file is part of mmountd.
+ * 
+ *  mmountd is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  mmountd is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU General Public License
+ *  along with mmountd.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ *  Original provided by fon.com
+ *  Copyright (C) 2009 John Crispin <blogic@openwrt.org> 
+ *
+ */
+ 
 
 include $(TOPDIR)/rules.mk
 
@@ -28,7 +33,7 @@ PKG_RELEASE=$(PKG_SOURCE_VERSION)
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/stagprom/mmountd.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=b743b40894005929c78a239fe165b1647d53bed9
+PKG_SOURCE_VERSION:=ede7b0a72f4ecac510288775e40c77890fed7038
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 CMAKE_INSTALL:=1
